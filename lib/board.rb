@@ -1,8 +1,8 @@
 class Board
   attr_reader :width, :height
   attr_reader :grid
-  @play = false
-  @win = false
+  @play
+  @win
   @notation = Hash.new
 
   def initialize
@@ -17,6 +17,8 @@ class Board
                  'g' => 6,
                  'h' => 7}
     create_board  
+    @play = false
+    @win = false
   end
 
   def create_board
@@ -50,6 +52,8 @@ class Board
   def set_cell i,j,value
     if i.between?(0,@width) && j.between?(0,@height)
       @grid[j][i] = value
+
+     @grid[j][i].cell = [i,j]  if value != nil
       "cell not empty" if @grid[j][i] != nil
     else
       "out of bounds"
@@ -90,7 +94,8 @@ class Board
     populate
     draw_board
 
-    return if !@play
+    return if !@play 
+
     while !@win 
       take_turn(1)
       draw_board

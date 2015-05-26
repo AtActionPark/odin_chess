@@ -4,7 +4,7 @@ class Pawn < Piece
     @player = player
     @type = "p"
     @display = type + player.to_s
-@moves = []
+    @moves = []
     if player == 1
       @moves<<[0,1]
     else

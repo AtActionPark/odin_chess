@@ -27,13 +27,13 @@ describe "Board" do
 
   describe "#get_cell_by_notation" do
     it "allows to get a cell by giving the notation instead of the coordinates" do  
-      board.set_cell(0,0,1)
+      board.set_cell(0,0,Pawn.new(1))
       expect(board.get_cell(0,0)).to eql board.get_cell_by_notation('a8')
-      board.set_cell(1,1,1)
+      board.set_cell(1,1,Pawn.new(1))
       expect(board.get_cell(1,1)).to eql board.get_cell_by_notation('b7')
-      board.set_cell(3,4,1)
+      board.set_cell(3,4,Pawn.new(1))
       expect(board.get_cell(3,4)).to eql board.get_cell_by_notation('d4')
-      board.set_cell(7,7,1)
+      board.set_cell(7,7,Pawn.new(1))
       expect(board.get_cell(7,7)).to eql board.get_cell_by_notation('h1')
     end
 
@@ -45,43 +45,49 @@ describe "Board" do
 
   describe "#set_cell" do
     it "allows to set cell value" do
-      board.set_cell(0,0,1)
-      expect(board.get_cell(0,0)).to eql 1
+      p = Pawn.new(1)
+      board.set_cell(0,0,p)
+      expect(board.get_cell(0,0).display).to eql p.display
     end
 
     it "returns an error message when accessing out of bounds values" do
-      expect(board.set_cell(-1,2, 1)).to eql "out of bounds"
-      expect(board.set_cell(2,30, 1)).to eql "out of bounds"
+      p = Pawn.new(1)
+      expect(board.set_cell(-1,2, p)).to eql "out of bounds"
+      expect(board.set_cell(2,30, p)).to eql "out of bounds"
     end
 
     it "returns an error message when setting a non empty cell" do
-      board.set_cell(0,0,1)
-      expect(board.set_cell(0,0,2)).to eql "cell not empty"
+      p = Pawn.new(1)
+      board.set_cell(0,0,p)
+      expect(board.set_cell(0,0,p)).to eql "cell not empty"
     end
   end
 
   describe "#set_cell_by_notation" do
     it "allows to set a cell by giving the notation instead of the coordinates" do
-      board.set_cell_by_notation('a8',1)
-      expect(board.get_cell_by_notation('a8')).to eql 1
-      board.set_cell_by_notation('d5',1)
-      expect(board.get_cell_by_notation('d5')).to eql 1
-      board.set_cell_by_notation('h1',1)
-      expect(board.get_cell_by_notation('h1')).to eql 1
+      p = Pawn.new(1)
+      board.set_cell_by_notation('a8',p)
+      expect(board.get_cell_by_notation('a8').display).to eql p.display
+      board.set_cell_by_notation('d5',p)
+      expect(board.get_cell_by_notation('d5').display).to eql p.display
+      board.set_cell_by_notation('h1',p)
+      expect(board.get_cell_by_notation('h1').display).to eql p.display
     end
 
     it "returns false if incorrect input" do
-      expect(board.set_cell_by_notation('i7', 1)).to eql false
-      expect(board.set_cell_by_notation('a9', 1)).to eql false
+      p = Pawn.new(1)
+      expect(board.set_cell_by_notation('i7', p)).to eql false
+      expect(board.set_cell_by_notation('a9', p)).to eql false
     end
   end
 
   describe "#clear_board" do 
     it "sets all the cells to nil" do
-      board.set_cell(0,0,1)
-      board.set_cell(1,0,1)
-      board.set_cell(2,0,1)
-      board.set_cell(3,0,1)
+      p = Pawn.new(1)
+      board.set_cell(0,0,p)
+      board.set_cell(1,0,p)
+      board.set_cell(2,0,p)
+      board.set_cell(3,0,p)
 
       board.clear_board
 
