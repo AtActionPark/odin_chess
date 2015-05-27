@@ -4,7 +4,8 @@ class Piece
   attr_reader :display
   attr_accessor :cell
 
-  @moves
+  attr_reader :moves
+  attr_reader :special_moves
 
   def initialize 
     @cell = []
@@ -12,6 +13,9 @@ class Piece
 
   def valid_move? move
     return @moves.include?(move)
+  end
+
+  def update
   end
 
 end

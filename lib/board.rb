@@ -26,10 +26,10 @@ class Board
   end
 
   def get_cell i,j
-    if i.between?(0,@width) && j.between?(0,@height)
+    if i.between?(0,@width-1) && j.between?(0,@height-1)
       @grid[j][i]
     else
-      "cell (#{i},#{j}) is out of bounds"
+      return false
     end
   end
 
@@ -163,12 +163,38 @@ class Board
     piece = get_cell_by_notation(cell_from)
 
     # Can't move if movement is not valid for the piece
-    return false if !piece.valid_move?(get_difference(cell_from, cell_to))
+    # Case : pawn
+    if piece.type == "p"
+      # If pawn capturing
+      if(get_cell_by_notation(cell_to) != nil && get_cell_by_notation(cell_to).player != player)
+        return false if !piece.valid_move?(get_difference(cell_from, cell_to), true)
+      # If pawn moving normally
+      else
+        return false if !piece.valid_move?(get_difference(cell_from, cell_to), false)
+      end
+      # Special case for pawns : after the first move, need to update @moves (cant move by 2 tiles anymore)
+      piece.update
+    # Case : not pawn
+    else
+      return false if !piece.valid_move?(get_difference(cell_from, cell_to))
+    end
+
     # Can't move if path is blocked
     return false if path_blocked?(cell_from, cell_to)
 
-    set_cell_by_notation(cell_to, get_cell_by_notation(cell_from))
+    # Try the move. If it results in a check for the player moving, reset the board and returns false
     set_cell_by_notation(cell_from, nil)
+    if(check?(player) == true)
+      set_cell_by_notation(cell_from, piece)
+      return false
+    end
+
+    # Move the piece (create new one at location and delete old one)
+    # Could change structure to only change coordinates instead 
+    set_cell_by_notation(cell_to, piece)
+    set_cell_by_notation(cell_from, nil)
+
+    true
   end
 
   def path_blocked? cell_from, cell_to #TO REFACTOR 
@@ -235,7 +261,59 @@ class Board
 
       #return true
     end
-    return false
-        
+    return false     
   end
+
+  def check? player
+    # Finds the player's King
+    king =  search_king(player)
+    if king == 'no king found'
+      return false
+    end
+    # Checks all tiles under possible attack
+    attacks = []
+    if player == 2
+      attacks = check_pieces_possible_attacks(1)
+    else
+      attacks = check_pieces_possible_attacks(2)
+    end
+
+    return true if attacks.include?(king.cell)
+    return false
+  end
+
+  def search_king player
+    (0..7).each do |i|
+      (0..7).each do |j|
+        return get_cell(i,j) if get_cell(i,j) != nil && get_cell(i,j).type == 'K' && get_cell(i,j).player == player
+      end
+    end
+    return 'no king found'
+  end
+
+  def check_pieces_possible_attacks player
+    possible_attacks = []
+    (0..7).each do |i|
+      (0..7).each do |j|
+        if get_cell(i,j) != nil  && get_cell(i,j).player == player
+          p = get_cell(i,j)
+          moves = p.moves
+          if p.type == "p"
+            moves = p.special_moves
+          end
+          moves.each do |m|
+            x = p.cell[0] + m[0]
+            y = p.cell[1] - m[1]
+            cell = [x,y]
+            if get_cell(x,y) != false
+              possible_attacks << cell
+              possible_attacks
+            end
+          end 
+        end
+      end
+    end
+    possible_attacks = possible_attacks.uniq
+  end
+
 end

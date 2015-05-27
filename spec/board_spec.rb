@@ -19,9 +19,9 @@ describe "Board" do
       expect(board.get_cell(0,0)).to eql nil
     end
 
-    it "returns an error message when accessing out of bounds values" do
-      expect(board.get_cell(-1,2)).to eql "cell (-1,2) is out of bounds"
-      expect(board.get_cell(2,30)).to eql "cell (2,30) is out of bounds"
+    it "returns false when accessing out of bounds values" do
+      expect(board.get_cell(-1,2)).to eql false
+      expect(board.get_cell(2,30)).to eql false
     end
   end
 
@@ -110,16 +110,16 @@ describe "Board" do
     it "moves the piece from/to a position" do
       p = Pawn.new(1)
       board.set_cell_by_notation("a2", p)
-      board.do_move("a2", "a3", 1)
+      board.do_move("a2", "a4", 1)
       expect(board.get_cell_by_notation("a2")).to eql nil
-      expect(board.get_cell_by_notation("a3")).to eql p
+      expect(board.get_cell_by_notation("a4")).to eql p
 
       board.clear_board
       p = Pawn.new(2)
       board.set_cell_by_notation("a7", p)
-      board.do_move("a7", "a6", 2)
+      board.do_move("a7", "a5", 2)
       expect(board.get_cell_by_notation("a7")).to eql nil
-      expect(board.get_cell_by_notation("a6")).to eql p
+      expect(board.get_cell_by_notation("a5")).to eql p
 
       board.clear_board
       p = Knight.new(1)
@@ -246,14 +246,6 @@ describe "Board" do
     end
 
     it "replaces piece already on the cell" do
-      p1 = Pawn.new(1)
-      p2 = Pawn.new(2)
-
-      board.set_cell_by_notation("a2", p1)
-      board.set_cell_by_notation("a3", p2)
-
-      board.do_move("a2", "a3", 1)
-      expect(board.get_cell_by_notation("a3")).to eql p1
 
       N1 = Knight.new(1)
       p2 = Pawn.new(2)
@@ -263,17 +255,95 @@ describe "Board" do
 
       board.do_move("a1", "b3", 1)
       expect(board.get_cell_by_notation("b3")).to eql N1
+    end
 
-    board.clear_board
+    it "accounts for pawns moving 1 or 2 tiles from initial row"  do
+      p = Pawn.new(1)
+      board.set_cell_by_notation("a2", p)
+      board.do_move("a2", "a4", 1)
+      expect(board.get_cell_by_notation("a4")).to eql p
+      board.do_move("a4", "a5", 1)
+      expect(board.get_cell_by_notation("a5")).to eql p
 
+      p = Pawn.new(1)
+      board.set_cell_by_notation("b2", p)
+      board.do_move("b2", "b3", 1)
+      expect(board.get_cell_by_notation("b3")).to eql p
+      board.do_move("b3", "b4", 1)
+      expect(board.get_cell_by_notation("b4")).to eql p
+    end
+
+    it "accounts for pawns only capturing in diagonal" do 
+      p = Pawn.new(1)
+      board.set_cell_by_notation("a2", p)
+      p = Pawn.new(2)
+      board.set_cell_by_notation("a3", p)
+      expect(board.do_move("a2", "a3", 1)).to eql false
+
+      board.clear_board
+      p = Pawn.new(1)
+      board.set_cell_by_notation("a2", p)
+      p = Pawn.new(2)
+      board.set_cell_by_notation("b3", p)
+      expect(board.do_move("a2", "b3", 1)).to eql true
+    end
+
+    it "returns false if the move would result in a check" do 
+      p = King.new(1)
+      board.set_cell_by_notation("a1", p)
+      p = Pawn.new(1)
+      board.set_cell_by_notation("b2", p)
+      p = Bishop.new(2)
+      board.set_cell_by_notation("h8", p)
+      expect(board.do_move("b2", "b3", 1)).to eql false
+
+      p = King.new(1)
+      board.set_cell_by_notation("b1", p)
+      p = Bishop.new(2)
+      board.set_cell_by_notation("h8", p)
+      expect(board.do_move("b1", "a1", 1)).to eql false
+
+    end
+  end
+
+  describe "check?" do 
+    it "recognizes check scenarios" do 
       p1 = Tower.new(1)
-      p2 = Tower.new(2)
-
+      p2 = King.new(2)
+      p3 = King.new(1)
       board.set_cell_by_notation("a1", p1)
-      board.set_cell_by_notation("a8", p2)
+      board.set_cell_by_notation("a4", p2)
+      board.set_cell_by_notation("g1", p3)
+      expect(board.check?(2)).to eql true
+      expect(board.check?(1)).to eql false
 
-      board.do_move("a1", "a8", 1)
-      expect(board.get_cell_by_notation("a8")).to eql p1
+      board.clear_board
+      p1 = Bishop.new(1)
+      p2 = King.new(2)
+      board.set_cell_by_notation("a1", p1)
+      board.set_cell_by_notation("h8", p2)
+      expect(board.check?(2)).to eql true
+
+      board.clear_board
+      p1 = Knight.new(1)
+      p2 = King.new(2)
+      board.set_cell_by_notation("d4", p1)
+      board.set_cell_by_notation("e2", p2)
+      expect(board.check?(2)).to eql true
+
+      board.clear_board
+      p1 = Pawn.new(1)
+      p2 = King.new(2)
+      board.set_cell_by_notation("a1", p1)
+      board.set_cell_by_notation("b2", p2)
+      expect(board.check?(2)).to eql true
+
+      board.clear_board
+      p1 = Pawn.new(2)
+      p2 = King.new(1)
+      board.set_cell_by_notation("f4", p1)
+      board.set_cell_by_notation("e3", p2)
+      expect(board.check?(1)).to eql true
     end
   end
 
