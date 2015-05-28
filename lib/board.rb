@@ -1,4 +1,5 @@
 class Board
+  require 'yaml'
   attr_reader :width, :height
   attr_reader :grid
 
@@ -14,7 +15,6 @@ class Board
                  'g' => 6,
                  'h' => 7}
     create_board  
-    @play = true
     @win = false
   end
 
@@ -101,8 +101,6 @@ class Board
     populate
     draw_board
 
-    return if !@play 
-
     while !@win 
       take_turn(1)
       draw_board
@@ -125,10 +123,14 @@ class Board
     puts ""
     puts "Player#{player} - input move"
     move = gets.chomp
+    save_game if move == "save"
     move = move.split(' ')
+    
+
     while do_move(move[0].to_s, move[1].to_s, player) == false do
       puts "Player#{player} - input move"
       move = gets.chomp
+      save_game if move == "save"
       move = move.split(' ')
     end
   end
@@ -168,6 +170,9 @@ class Board
   end
 
   def do_move cell_from, cell_to, player
+    if get_cell_by_notation(cell_from) == false || get_cell_by_notation(cell_to) == false
+      puts "Please enter move as following : d2 d4" if @play == true
+      return false  end
     if get_cell_by_notation(cell_from) == nil
       puts "Can't move an empty piece" if @play == true
       return false  end
@@ -439,6 +444,20 @@ class Board
     end
     # For all the player pieces, try to move them, if the situation resolves, there is no check_mate
     return check_pieces_possible_moves(player)
+  end
+
+  def save_game
+    Dir.mkdir('saves') unless Dir.exist? 'saves'
+    @filename = 'saves/saved_game.yaml'
+    File.open(@filename, 'w') do |file|
+      file.puts YAML.dump(self)
+    end
+    puts "Game saved as #{@filename}"
+  end
+
+  def resume_game
+    draw_board
+    play
   end
 
 end
