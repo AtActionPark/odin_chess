@@ -7,5 +7,6 @@ run tests with 'rake' (need to change value of @play to false in board.rb before
 
 TODO
 - special moves : castling, promotion, en passant
- save/load
- IA
+- save/load
+- IA
+
