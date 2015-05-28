@@ -162,6 +162,12 @@ describe "Board" do
       board.do_move("a1", "h8", 1)
       expect(board.get_cell_by_notation("a1")).to eql nil
       expect(board.get_cell_by_notation("h8")).to eql p
+
+      board.clear_board
+      p = Knight.new(1)
+      board.set_cell_by_notation("b1", p)
+      board.do_move("b1", "d2", 1)
+      expect(board.get_cell_by_notation("d2")).to eql p
     end
 
     it "returns false if the type of move is not valid for the piece " do
@@ -303,6 +309,27 @@ describe "Board" do
       board.set_cell_by_notation("h8", p)
       expect(board.do_move("b1", "a1", 1)).to eql false
 
+      p = King.new(2)
+      board.set_cell_by_notation("d1", p)
+      p = Knight.new(2)
+      board.set_cell_by_notation("d2", p)
+      p = Tower.new(1)
+      board.set_cell_by_notation("d8", p)
+      expect(board.do_move("d2", "f3", 1)).to eql false
+    end
+
+    it "returns false if trying to capture the king" do 
+      p = King.new(1)
+      board.set_cell_by_notation("a1", p)
+      p = Bishop.new(2)
+      board.set_cell_by_notation("h8", p)
+      expect(board.do_move("h8", "a1", 2)).to eql false
+
+      p = King.new(2)
+      board.set_cell_by_notation("d8", p)
+      p = Knight.new(1)
+      board.set_cell_by_notation("e6", p)
+      expect(board.do_move("e6", "d8", 1)).to eql false
     end
   end
 
@@ -344,6 +371,70 @@ describe "Board" do
       board.set_cell_by_notation("f4", p1)
       board.set_cell_by_notation("e3", p2)
       expect(board.check?(1)).to eql true
+
+      board.clear_board 
+      p = King.new(1)
+      board.set_cell_by_notation("h1", p)
+      p = Tower.new(1)
+      board.set_cell_by_notation("g1", p)
+      p = Queen.new(2)
+      board.set_cell_by_notation("f1", p)
+      p = Bishop.new(2)
+      board.set_cell_by_notation("f4", p)
+      expect(board.check?(1)).to eql false
+
+      board.clear_board 
+      p = King.new(1)
+      board.set_cell_by_notation("a1", p)
+      p = King.new(2)
+      board.set_cell_by_notation("e8", p)
+      p = Bishop.new(1)
+      board.set_cell_by_notation("c4", p)
+      p = Queen.new(1)
+      board.set_cell_by_notation("f7", p)
+      expect(board.check?(2)).to eql true
+    end
+  end
+
+  describe "checkmate" do 
+    it "recognizes check-mate scenarios" do
+      p = King.new(1)
+      board.set_cell_by_notation("h1", p)
+      p = Queen.new(2)
+      board.set_cell_by_notation("f1", p)
+      p = Bishop.new(2)
+      board.set_cell_by_notation("f4", p)
+      expect(board.check_mate?(1)).to eql true
+
+      board.clear_board 
+      p = King.new(1)
+      board.set_cell_by_notation("h1", p)
+      p = Tower.new(1)
+      board.set_cell_by_notation("g6", p)
+      p = Queen.new(2)
+      board.set_cell_by_notation("f1", p)
+      p = Bishop.new(2)
+      board.set_cell_by_notation("f4", p)
+      expect(board.check_mate?(1)).to eql false
+    end
+  end
+
+  describe "test_game" do
+    it "validates game flow and win condition" do
+      board.populate
+
+      board.do_move("e2", "e4", 1)
+      board.do_move("e7", "e5", 2)
+
+
+      board.do_move("d1", "h5", 1)
+      board.do_move("b8", "c6", 2)
+
+      board.do_move("f1", "c4", 1)
+      board.do_move("g8", "f6", 2)
+
+      board.do_move("h5", "f7", 1)
+      expect(board.check_mate?(2)).to eql true
     end
   end
 

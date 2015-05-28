@@ -3,6 +3,7 @@ class Piece
   attr_reader :type
   attr_reader :display
   attr_accessor :cell
+  attr_accessor :notation
 
   attr_reader :moves
   attr_reader :special_moves

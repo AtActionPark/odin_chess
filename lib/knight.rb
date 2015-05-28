@@ -6,10 +6,10 @@ class Knight < Piece
     @display = type + player.to_s
 
     @moves = []
+    @moves << [2, -1]
+    @moves << [2, 1]
     @moves << [-2, -1]
     @moves << [-2, 1]
-    @moves << [-1, -2]
-    @moves << [-1, 2]
     @moves << [1, -2]
     @moves << [1, 2]
     @moves << [-1, -2]

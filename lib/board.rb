@@ -1,9 +1,6 @@
 class Board
   attr_reader :width, :height
   attr_reader :grid
-  @play
-  @win
-  @notation = Hash.new
 
   def initialize
     @width = 8
@@ -17,7 +14,7 @@ class Board
                  'g' => 6,
                  'h' => 7}
     create_board  
-    @play = false
+    @play = true
     @win = false
   end
 
@@ -49,11 +46,21 @@ class Board
     return [@notation[letter], number]
   end
 
+  def get_notation_from_coord coord
+    return false if coord.length !=2
+    letter = @notation.key(coord[0])
+    number = 8-coord[1]
+    result = letter.to_s+number.to_s
+    return result.to_s
+  end
+
   def set_cell i,j,value
     if i.between?(0,@width) && j.between?(0,@height)
       @grid[j][i] = value
 
-     @grid[j][i].cell = [i,j]  if value != nil
+    if value != nil
+      @grid[j][i].cell = [i,j] 
+    end
       "cell not empty" if @grid[j][i] != nil
     else
       "out of bounds"
@@ -99,8 +106,18 @@ class Board
     while !@win 
       take_turn(1)
       draw_board
+      if check_mate?(2)
+        puts "Check Mate, player 1 wins"
+        @win = true
+        break
+      end
       take_turn(2)
       draw_board
+      if check_mate?(1)
+        puts "Check Mate, player 2 wins"
+        @win = true
+        break
+      end
     end
   end
 
@@ -151,14 +168,27 @@ class Board
   end
 
   def do_move cell_from, cell_to, player
-    # Can't move an empty piece
-    return false if get_cell_by_notation(cell_from) == nil
-    # Can't move other player's pieces
-    return false if get_cell_by_notation(cell_from).player != player
-    # Can't move to a cell outside bounds
-    return false if get_cell_by_notation(cell_to) == false
-    # Can't move to an cell occupied by an ally
-    return false if get_cell_by_notation(cell_to) != nil && get_cell_by_notation(cell_to).player == player
+    if get_cell_by_notation(cell_from) == nil
+      puts "Can't move an empty piece" if @play == true
+      return false  end
+    if get_cell_by_notation(cell_from).player != player
+      puts "Can't move other player's pieces" if @play == true
+      return false end
+    if get_cell_by_notation(cell_to) == false
+      puts "Can't move to a cell outside bounds" if @play == true
+      return false end
+    if get_cell_by_notation(cell_to) != nil && get_cell_by_notation(cell_to).player == player
+      puts "Can't move to an cell occupied by an ally" if @play == true
+      return false end
+      if player == 1
+        if get_cell_by_notation(cell_to) == search_king(2)
+          puts "Can't directly capture the king" if @play == true
+          return false end
+      else
+        if get_cell_by_notation(cell_to) == search_king(1)
+          puts "Can't directly capture the king" if @play == true
+          return false end
+      end
 
     piece = get_cell_by_notation(cell_from)
 
@@ -167,25 +197,33 @@ class Board
     if piece.type == "p"
       # If pawn capturing
       if(get_cell_by_notation(cell_to) != nil && get_cell_by_notation(cell_to).player != player)
-        return false if !piece.valid_move?(get_difference(cell_from, cell_to), true)
+        if !piece.valid_move?(get_difference(cell_from, cell_to), true)
+          puts "Unvalid move" if @play == true
+          return false end
       # If pawn moving normally
       else
-        return false if !piece.valid_move?(get_difference(cell_from, cell_to), false)
+        if !piece.valid_move?(get_difference(cell_from, cell_to), false)
+          puts "Unvalid move"  if @play == true
+          return false end
       end
       # Special case for pawns : after the first move, need to update @moves (cant move by 2 tiles anymore)
       piece.update
     # Case : not pawn
     else
-      return false if !piece.valid_move?(get_difference(cell_from, cell_to))
+      if !piece.valid_move?(get_difference(cell_from, cell_to))
+        puts "Unvalid move" if @play == true
+        return false end
     end
 
-    # Can't move if path is blocked
-    return false if path_blocked?(cell_from, cell_to)
+    if path_blocked?(cell_from, cell_to)
+      puts "Can't move if path is blocked"  if @play == true
+      return false end
 
     # Try the move. If it results in a check for the player moving, reset the board and returns false
     set_cell_by_notation(cell_from, nil)
     if(check?(player) == true)
       set_cell_by_notation(cell_from, piece)
+      puts "Move results in check position" if @play == true
       return false
     end
 
@@ -194,6 +232,45 @@ class Board
     set_cell_by_notation(cell_to, piece)
     set_cell_by_notation(cell_from, nil)
 
+    true
+  end
+
+  def try_move cell_from, cell_to, player
+    if get_cell_by_notation(cell_from) == nil
+      return false  end
+    if cell_to == cell_from
+      return false  end
+
+    if get_cell_by_notation(cell_to) == false
+      return false end
+    if get_cell_by_notation(cell_to) != nil && get_cell_by_notation(cell_to).player == player
+      return false end
+      
+
+    piece = get_cell_by_notation(cell_from)
+
+    # Can't move if movement is not valid for the piece
+    # Case : pawn
+    if piece.type == "p"
+      # If pawn capturing
+      if(get_cell_by_notation(cell_to) != nil && get_cell_by_notation(cell_to).player != player)
+        if !piece.valid_move?(get_difference(cell_from, cell_to), true)
+          return false end
+      # If pawn moving normally
+      else
+        if !piece.valid_move?(get_difference(cell_from, cell_to), false)
+          return false end
+      end
+      # Special case for pawns : after the first move, need to update @moves (cant move by 2 tiles anymore)
+      piece.update
+    # Case : not pawn
+    else
+      if !piece.valid_move?(get_difference(cell_from, cell_to))
+        return false end
+    end
+
+    if path_blocked?(cell_from, cell_to)
+      return false end
     true
   end
 
@@ -305,15 +382,63 @@ class Board
             x = p.cell[0] + m[0]
             y = p.cell[1] - m[1]
             cell = [x,y]
-            if get_cell(x,y) != false
+            if get_cell(x,y) != false && try_move(get_notation_from_coord([i,j]), get_notation_from_coord(cell),player) == true
               possible_attacks << cell
-              possible_attacks
             end
           end 
         end
       end
     end
     possible_attacks = possible_attacks.uniq
+  end
+
+  def check_pieces_possible_moves player
+    (0..7).each do |i|
+      (0..7).each do |j|
+        if get_cell(i,j) != nil  && get_cell(i,j).player == player
+          p = get_cell(i,j)
+          #puts "checking #{p}, at position #{p.cell}"
+          moves = p.moves
+          if p.type == "p"
+            p.special_moves.each do |m|
+              moves << m
+            end
+            
+          end
+          moves.each do |m|
+            x = p.cell[0].to_i + m[0].to_i
+            y = p.cell[1] - m[1]
+            cell = [x,y]
+            if get_cell(x,y) != false and get_cell(x,y) == nil
+              # Try the move, keep values of initial state
+              temp_cell_to = get_cell(x,y)
+              temp_cell_from = p
+
+              set_cell(x,y,p)
+              if check?(player) == false 
+                #puts "no more check if moving #{p} to #{cell} "
+                set_cell(x,y,temp_cell_to)
+                set_cell(i,j,temp_cell_from)
+                return false
+              else
+                set_cell(x,y,temp_cell_to)
+                set_cell(i,j,temp_cell_from)
+              end
+            end
+          end 
+        end
+      end
+    end
+    return true
+  end
+
+  def check_mate? player
+    # Is the player check?
+    if check?(player) == false
+      return false
+    end
+    # For all the player pieces, try to move them, if the situation resolves, there is no check_mate
+    return check_pieces_possible_moves(player)
   end
 
 end
